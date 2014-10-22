@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>NameGen</title>
+<link rel="stylesheet" href="style.css">
+<script type="text/javascript" src="words.js"></script>
+<script type="text/javascript" src="nameGen.js"></script>
+</head>
+
+<body onload="Init();">
+    <div id="result" onclick="GenerateButton();"></div>
+<div id="main_interface">
+    
+    <!--<button onclick="GenerateButton();">generate</button>-->    
+</div>
+
+<div id="settings">
+    <textarea id="pattern">a n n</textarea>
+    <textarea id="nouns" onblur="InitNouns();">time year people way day man thing woman life child world school state family student group country problem hand part place case week company system program question work government number night point home water room mother area money story fact month lot right study book eye job word business issue side kind head house service friend father power hour game line end member law car city community name president team minute idea kid body information back parent face others level office door health person art war history party result change morning reason research girl guy moment air teacher force education</textarea>
+    <textarea id="verbs" onblur="InitVerbs();">walk talk stalk</textarea>
+    <textarea id="adjectives" onblur="InitAdjectives();">good new first last long great little own other old right big high different small large next early young important few public bad same able</textarea>
+</div>
+
+</body>
+
+
+</html>

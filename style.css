@@ -1,0 +1,29 @@
+body
+{
+    font-family: sans-serif;
+    background-color: #004284;
+    color: #844200;
+    border-width: 0px;
+    padding: 0px;
+    margin: 0px;
+}
+
+textarea
+{
+    background-color: #0064F8;
+}
+
+
+
+#result
+{
+    
+    width: auto;
+    height: 200px;
+    text-align: center;
+    vertical-align: middle;
+    font-variant: small-caps;
+    font-size: xx-large;
+    font-weight: bolder;
+    
+}
