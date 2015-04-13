@@ -8,7 +8,7 @@ var adjectives;
 
 function Init()
 {
-    document.getElementById("nouns").value = nouns_top1500;
+    document.getElementById("nouns").value = builtInWordLists["nouns_top1500"];
     InitAdjectives();
     InitNouns();
     InitVerbs();

@@ -28,42 +28,23 @@
             $generatorRuleContainer.disableSelection();
             $(".wordList", $wordListContainer).disableSelection();
 
-           $( ".wordList", $wordListContainer ).draggable({
-			cancel: "a.ui-icon", // clicking an icon won't initiate dragging
-			revert: true, // when not dropped, the item will revert back to its initial position
-			revertDuration: 10,
-			containment: "document",
-			helper: "clone",
-			cursor: "move",
-			start: function (event, ui) {
-			    addToRuleContainer(ui.helper);
-			},
-			connectToSortable: "#generatorRuleContainer"
-		     });
+           
 
       
 			
-            var ruleContainerItem = "<div class='btn'></div>";
-            var ruleContainerItemButton = "<span class='glyphicon glyphicon-remove remove-rule-button' aria-hidden='true'></span>";
-            function addToRuleContainer($item) {
-                $(".edit-list-button", $item).remove();
-                $item.append(ruleContainerItemButton);
-                $(".remove-rule-button").click(function () {
-                    $(this).parent().remove();
-                });
-            }
+            
 
             $(document).keydown(function(e) {
     switch(e.which) {
         case 37: // left
-        alert("left");
+            GenerateButton();
         break;
 
         case 38: // up
         break;
 
         case 39: // right
-        alert("right");
+            GenerateButton();
         break;
 
         case 40: // down
@@ -72,8 +53,66 @@
         default: return; // exit this handler for other keys
     }
     e.preventDefault(); // prevent the default action (scroll / move caret)
-});
+            });
+
+            addBuiltInWordLists();
+            MakeWordListItemsDragable();
         });
+
+        
+
+        function addBuiltInWordLists () {
+            for (var key in builtInWordLists) {
+                if (builtInWordLists.hasOwnProperty(key)) {
+                    addWordListToOverview("builtIn_", key);
+                }
+            }
+        }
+
+        var listContainerItem = "<div class='btn wordList'></div>";
+        var listContainerItemButton = "<span class='glyphicon glyphicon-pencil edit-list-button' aria-hidden='true'></span>";
+
+        function addWordListToOverview(prefix, title) {
+            $newItem = $(listContainerItem);
+            $newItem.text(title);
+            $newItem.attr( "alt", prefix + title);
+            $newItem.append(listContainerItemButton);
+
+            $(".edit-list-button").click(function () {
+                alert($(this).parent().attr("alt"));
+            });
+
+            $("#wordListContainer").append($newItem);
+        }
+
+        //var ruleContainerItem = "<div class='btn'></div>";
+        var ruleContainerItemButton = "<span class='glyphicon glyphicon-remove remove-rule-button' aria-hidden='true'></span>";
+        function addToRuleContainer($item) {
+            $(".edit-list-button", $item).remove();
+            $item.append(ruleContainerItemButton);
+            $(".remove-rule-button").click(function () {
+                $(this).parent().remove();
+            });
+        }
+
+        function MakeWordListItemsDragable() {
+            var $wordListContainer = $("#wordListContainer");
+
+            $(".wordList", $wordListContainer).draggable({
+                cancel: "a.ui-icon", // clicking an icon won't initiate dragging
+                revert: true, // when not dropped, the item will revert back to its initial position
+                revertDuration: 10,
+                containment: "document",
+                helper: "clone",
+                cursor: "move",
+                start: function (event, ui) {
+                    addToRuleContainer(ui.helper);
+                },
+                connectToSortable: "#generatorRuleContainer"
+            });
+        }
+
+       
     </script>
 </head>
 
@@ -94,12 +133,15 @@
                 </button>
 
         </div>
-        <div class="row well" id="generatorRuleContainer">
+        <div class="panel panel-default">
+            <div class="panel-heading">Generator Rule</div>
+            <div class="panel-body">
+                <div class="row well" id="generatorRuleContainer">
+                </div>
+            </div>
         </div>
+        
         <div class="row panel" id="wordListContainer">
-            <div class="btn wordList">List 1<span class='glyphicon glyphicon-pencil edit-list-button' aria-hidden='true'></span></div>
-            <div class="btn wordList">List 2</div>
-            <div class="btn wordList">List 3</div>
             
         </div>
     </div>
