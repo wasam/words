@@ -3,19 +3,108 @@
 <head>
 <meta charset="UTF-8">
 <title>NameGen</title>
-<link rel="stylesheet" href="style.css">
+    <link href="Content/bootstrap.min.css" rel="stylesheet" />
+    <link href="jQueryUI/jquery-ui.min.css" rel="stylesheet" />
+    <style>
+        
+    </style>
+    <script src="Scripts/jquery-1.9.1.min.js"></script>
+    <script src="jQueryUI/jquery-ui.min.js"></script>
+    <script src="Scripts/bootstrap.min.js"></script>
 <script type="text/javascript" src="words.js"></script>
 <script type="text/javascript" src="nameGen.js"></script>
+
+    <script>
+        $(function () {
+            var $generatorRuleContainer = $("#generatorRuleContainer");
+            var $wordListContainer = $("#wordListContainer");
+
+            $generatorRuleContainer.sortable({
+               placeholder: "btn",
+               forcePlaceholderSize: true,
+                cancel: "span.remove-rule-button",
+                helper: "clone"
+            });
+            $generatorRuleContainer.disableSelection();
+            $(".wordList", $wordListContainer).disableSelection();
+
+           $( ".wordList", $wordListContainer ).draggable({
+			cancel: "a.ui-icon", // clicking an icon won't initiate dragging
+			revert: true, // when not dropped, the item will revert back to its initial position
+			revertDuration: 10,
+			containment: "document",
+			helper: "clone",
+			cursor: "move",
+			start: function (event, ui) {
+			    addToRuleContainer(ui.helper);
+			},
+			connectToSortable: "#generatorRuleContainer"
+		     });
+
+      
+			
+            var ruleContainerItem = "<div class='btn'></div>";
+            var ruleContainerItemButton = "<span class='glyphicon glyphicon-remove remove-rule-button' aria-hidden='true'></span>";
+            function addToRuleContainer($item) {
+                $(".edit-list-button", $item).remove();
+                $item.append(ruleContainerItemButton);
+                $(".remove-rule-button").click(function () {
+                    $(this).parent().remove();
+                });
+            }
+
+            $(document).keydown(function(e) {
+    switch(e.which) {
+        case 37: // left
+        alert("left");
+        break;
+
+        case 38: // up
+        break;
+
+        case 39: // right
+        alert("right");
+        break;
+
+        case 40: // down
+        break;
+
+        default: return; // exit this handler for other keys
+    }
+    e.preventDefault(); // prevent the default action (scroll / move caret)
+});
+        });
+    </script>
 </head>
 
 <body onload="Init();">
-    <div id="result" onclick="GenerateButton();"></div>
-<div id="main_interface">
-    
-    <!--<button onclick="GenerateButton();">generate</button>-->    
-</div>
+    <div class="container">
+        <div class="jumbotron">
+            <h1 id="result"></h1>
 
-<div id="settings">
+                <button class="btn btn-success btn-lg" onclick="GenerateButton();">
+                    <span class="glyphicon glyphicon-ok" aria-hidden="true"></span>
+                    Keep + Next
+                    <span class="glyphicon glyphicon-arrow-left" aria-hidden="true"></span>
+                </button>
+                <button class="btn btn-danger btn-lg" onclick="GenerateButton();">
+                    <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
+                    Destroy + Next
+                     <span class="glyphicon glyphicon-arrow-right" aria-hidden="true"></span>
+                </button>
+
+        </div>
+        <div class="row well" id="generatorRuleContainer">
+        </div>
+        <div class="row panel" id="wordListContainer">
+            <div class="btn wordList">List 1<span class='glyphicon glyphicon-pencil edit-list-button' aria-hidden='true'></span></div>
+            <div class="btn wordList">List 2</div>
+            <div class="btn wordList">List 3</div>
+            
+        </div>
+    </div>
+
+    <div id="settings">
     <textarea id="pattern">a n n</textarea>
     <textarea id="nouns" onblur="InitNouns();">time year people way day man thing woman life child world school state family student group country problem hand part place case week company system program question work government number night point home water room mother area money story fact month lot right study book eye job word business issue side kind head house service friend father power hour game line end member law car city community name president team minute idea kid body information back parent face others level office door health person art war history party result change morning reason research girl guy moment air teacher force education</textarea>
     <textarea id="verbs" onblur="InitVerbs();">walk talk stalk</textarea>
