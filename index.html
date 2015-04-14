@@ -12,7 +12,7 @@
     <script src="jQueryUI/jquery-ui.min.js"></script>
     <script src="Scripts/bootstrap.min.js"></script>
 <script type="text/javascript" src="words.js"></script>
-<script type="text/javascript" src="nameGen.js"></script>
+<!--<script type="text/javascript" src="nameGen.js"></script>-->
 
     <script>
         $(function () {
@@ -23,7 +23,8 @@
                placeholder: "btn",
                forcePlaceholderSize: true,
                 cancel: "span.remove-rule-button",
-                helper: "clone"
+                helper: "clone",
+                revert: 42
             });
             $generatorRuleContainer.disableSelection();
             $(".wordList", $wordListContainer).disableSelection();
@@ -37,14 +38,15 @@
             $(document).keydown(function(e) {
     switch(e.which) {
         case 37: // left
-            GenerateButton();
+            //GenerateButton();
+            GenerateWordSequence();
         break;
 
         case 38: // up
         break;
 
         case 39: // right
-            GenerateButton();
+            GenerateWordSequence();
         break;
 
         case 40: // down
@@ -57,32 +59,93 @@
 
             addBuiltInWordLists();
             MakeWordListItemsDragable();
+
+            // add a few rules before we get started
+            for (i = 0; i < 3; i++) {
+                $oneChild = RandomListEntry($wordListContainer.children());
+                AddRuleToContainer($($oneChild).clone());
+            }
+
+            // and generate our very first sequence! yay!
+            GenerateWordSequence();
         });
 
-        
+        var wordLists = {};
 
         function addBuiltInWordLists () {
             for (var key in builtInWordLists) {
                 if (builtInWordLists.hasOwnProperty(key)) {
-                    addWordListToOverview("builtIn_", key);
+                    var newKey = "builtIn_" + key;
+                    addWordListToOverview(newKey, key);
+                    wordLists[newKey] = ParseWordListBlob(builtInWordLists[key]);
                 }
             }
+        }
+
+        function ParseWordListBlob(wordListBlob) {
+            return wordListBlob.split(" ");
+        }
+
+        function RandomDictionaryKey(dictionary) {
+            return RandomListEntry(GetDictionaryKeys(dictionary));
+        }
+
+        function GetDictionaryKeys(dictionary) {
+            return $.map(dictionary, function (v, i) {
+                return i;
+            });
+        }
+
+        function RandomListEntry(list) {
+            return list[Random(0, list.length)];
+        }
+
+        function Random(min, max) {
+            var range = max - min;
+            return Math.floor(Math.random() * range) + min;
+        }
+
+        function FetchGeneratorRule() {
+            rule = $("#generatorRuleContainer").children().map(function () { return $(this).attr("alt") });
+            
+            return rule;
+        }
+
+        function GenerateWordSequence() {
+            result = "";
+            rule = FetchGeneratorRule();
+            for (i = 0; i < rule.length; i++) {
+                ruleAtom = rule[i];
+                result += RandomListEntry(wordLists[ruleAtom]) + " ";
+            }
+            $("#result").text(result);
         }
 
         var listContainerItem = "<div class='btn wordList'></div>";
         var listContainerItemButton = "<span class='glyphicon glyphicon-pencil edit-list-button' aria-hidden='true'></span>";
 
-        function addWordListToOverview(prefix, title) {
+        function addWordListToOverview(key, title) {
+            $newItem = CreateWordListItem(key, title);
+
+            $("#wordListContainer").append($newItem);
+        }
+
+        function CreateWordListItem(key, title) {
             $newItem = $(listContainerItem);
             $newItem.text(title);
-            $newItem.attr( "alt", prefix + title);
+            $newItem.attr("alt", key);
             $newItem.append(listContainerItemButton);
 
             $(".edit-list-button").click(function () {
                 alert($(this).parent().attr("alt"));
             });
 
-            $("#wordListContainer").append($newItem);
+            return $newItem;
+        }
+
+        function AddRuleToContainer(wordListItem) {
+            $itemForRuleContainer = addToRuleContainer(wordListItem);
+            $("#generatorRuleContainer").append($itemForRuleContainer);
         }
 
         //var ruleContainerItem = "<div class='btn'></div>";
@@ -93,6 +156,7 @@
             $(".remove-rule-button").click(function () {
                 $(this).parent().remove();
             });
+            return $item;
         }
 
         function MakeWordListItemsDragable() {
@@ -116,17 +180,17 @@
     </script>
 </head>
 
-<body onload="Init();">
+<body>
     <div class="container">
         <div class="jumbotron">
             <h1 id="result"></h1>
 
-                <button class="btn btn-success btn-lg" onclick="GenerateButton();">
+                <button class="btn btn-success btn-lg" onclick="GenerateWordSequence();">
                     <span class="glyphicon glyphicon-ok" aria-hidden="true"></span>
                     Keep + Next
                     <span class="glyphicon glyphicon-arrow-left" aria-hidden="true"></span>
                 </button>
-                <button class="btn btn-danger btn-lg" onclick="GenerateButton();">
+                <button class="btn btn-danger btn-lg" onclick="GenerateWordSequence();">
                     <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
                     Destroy + Next
                      <span class="glyphicon glyphicon-arrow-right" aria-hidden="true"></span>
@@ -146,11 +210,11 @@
         </div>
     </div>
 
-    <div id="settings">
+   <!-- <div id="settings">
     <textarea id="pattern">a n n</textarea>
     <textarea id="nouns" onblur="InitNouns();">time year people way day man thing woman life child world school state family student group country problem hand part place case week company system program question work government number night point home water room mother area money story fact month lot right study book eye job word business issue side kind head house service friend father power hour game line end member law car city community name president team minute idea kid body information back parent face others level office door health person art war history party result change morning reason research girl guy moment air teacher force education</textarea>
     <textarea id="verbs" onblur="InitVerbs();">walk talk stalk</textarea>
-    <textarea id="adjectives" onblur="InitAdjectives();">good new first last long great little own other old right big high different small large next early young important few public bad same able</textarea>
+    <textarea id="adjectives" onblur="InitAdjectives();">good new first last long great little own other old right big high different small large next early young important few public bad same able</textarea>-->
 </div>
 
 </body>
