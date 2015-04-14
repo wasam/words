@@ -61,7 +61,8 @@
             MakeWordListItemsDragable();
 
             // add a few rules before we get started
-            for (i = 0; i < 3; i++) {
+            amount = Random(2, 5);
+            for (i = 0; i < amount; i++) {
                 $oneChild = RandomListEntry($wordListContainer.children());
                 AddRuleToContainer($($oneChild).clone());
             }
