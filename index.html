@@ -150,7 +150,7 @@
         function UpdateWordList(key, title, content) {
             wordLists[key] = content;
             wordListList[key] = title;
-            $("span[alt=" + key + "_title").text(title);
+            $("span[alt=" + key + "_title]").text(title);
             //$("#" + key + "_title").text(title);
 
             actualKey = ActualKey(key);
@@ -162,6 +162,8 @@
             wordLists[key] = null;
             delete wordListList[key];
             
+            $("div[alt=" + key + "]").remove();
+
             localStorage["wordList_" + key] = null;
             StoreLocalWordListList();
         }
@@ -357,7 +359,8 @@
         }
 
         function CreateNewWordListKey() {
-            return prefixLocal + "newKeyNotImplemented";
+            nowDate = new Date();
+            return prefixLocal + nowDate.getUTCFullYear() + "_" + nowDate.getUTCMonth() + "_" + nowDate.getUTCDate() + "_" + nowDate.getUTCHours() + "_" + nowDate.getUTCMinutes() + "_" + nowDate.getUTCSeconds() + "_" + nowDate.getUTCMilliseconds();
         }
 
         function WordListEditMode() {
