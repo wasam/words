@@ -38,18 +38,19 @@
             $(document).keydown(function(e) {
     switch(e.which) {
         case 37: // left
-            //GenerateButton();
-            GenerateWordSequence();
+            ExecuteLeft();
         break;
 
         case 38: // up
+            ExecuteUp();
         break;
 
         case 39: // right
-            GenerateWordSequence();
+            ExecuteRight();
         break;
 
         case 40: // down
+            ExecuteDown();
         break;
 
         default: return; // exit this handler for other keys
@@ -57,7 +58,12 @@
     e.preventDefault(); // prevent the default action (scroll / move caret)
             });
 
-            addBuiltInWordLists();
+            //AddWordList("local_test2", "Local Test 2", ["a", "b", "c"]);
+            //StoreLocalWordListList();
+            //StoreLocalWordList("test2");
+
+            AddBuiltInWordLists();
+            AddUserWordLists();
             MakeWordListItemsDragable();
 
             // add a few rules before we get started
@@ -69,22 +75,104 @@
 
             // and generate our very first sequence! yay!
             GenerateWordSequence();
+
+            
         });
 
+        var prefixLocal = "local_";
         var wordLists = {};
+        var wordListList = {};
 
-        function addBuiltInWordLists () {
+        function AddBuiltInWordLists () {
             for (var key in builtInWordLists) {
                 if (builtInWordLists.hasOwnProperty(key)) {
                     var newKey = "builtIn_" + key;
-                    addWordListToOverview(newKey, key);
-                    wordLists[newKey] = ParseWordListBlob(builtInWordLists[key]);
+                    AddWordList(newKey, key, ParseWordListBlob(builtInWordLists[key])); 
                 }
             }
         }
 
+        function AddUserWordLists() {
+            // we kinda need local storage for this function
+            if (!SupportsHtml5Storage())
+                return;
+
+            // get list of stored lists
+            wordListList = LoadLocalWordListList();
+            if (wordListList == null)
+                return;
+            
+            for (var listID in wordListList) {
+                if (wordListList.hasOwnProperty(listID)) {
+                    wordList = LoadLocalWordList(listID);
+                    if (wordList != null
+                        && wordList.length > 0) {
+                        var newKey = prefixLocal + listID;
+                        AddWordList(newKey, wordListList[listID], wordList);
+                    }
+                }
+            }
+        }
+
+        function AddWordList(key, title, content) {
+            if (wordLists[key] != null)
+                return;
+            addWordListToOverview(key, title);
+            wordLists[key] = content;
+            wordListList[key] = title;
+        }
+
+        function LoadLocalWordList(listID) {
+            localWordListBlob = localStorage["wordList_" + listID];
+            if (localWordListBlob == null)
+                return null;
+            return ParseWordListBlob(localWordListBlob);
+        }
+
+        function StoreLocalWordList(listID) {
+            localWordListBlob = "";
+            content = wordLists[prefixLocal + listID];
+            for (var i = 0; i < content.length; i++) {
+                localWordListBlob += content[i] + " ";
+            }
+            if (localWordListBlob != "") {
+                localStorage["wordList_" + listID] = localWordListBlob;
+            }
+        }
+
+        function LoadLocalWordListList() {
+            wordListListString = localStorage["wordListList"];
+            if (wordListListString == null)
+                return null;
+            return ParseWordListListBlob(wordListListString);
+        }
+
+        function StoreLocalWordListList() {
+            wordListListTuples = "";
+            for (var key in wordListList) {
+                if (wordListList.hasOwnProperty(key)) {
+                    if (key.substr(0, prefixLocal.length) == prefixLocal) {
+                        actualKey = key.substr(prefixLocal.length);
+                        wordListListTuples += actualKey + "," + wordListList[key] + ";";
+                    }
+                }
+            }
+            localStorage["wordListList"] = wordListListTuples;
+        }
+
         function ParseWordListBlob(wordListBlob) {
+            wordListBlob = wordListBlob.trim();
             return wordListBlob.split(" ");
+        }
+
+        function ParseWordListListBlob(wordListListBlob) {
+            wordListListTuples = wordListListBlob.split(";");
+            result = {};
+            for (var i = 0; i < wordListListTuples.length; i++) {
+                wordListListTupleSplit = wordListListTuples[i].split(",");
+                result[wordListListTupleSplit[0]] = wordListListTupleSplit[1];
+            }
+            return result;
         }
 
         function RandomDictionaryKey(dictionary) {
@@ -122,13 +210,45 @@
             $("#result").text(result);
         }
 
+        function ExecuteRight () {
+            GenerateWordSequence();
+        }
+
+        function ExecuteLeft() {
+
+        }
+
+        function ExecuteDown() {
+            StoreCurrentWords();
+            ExecuteRight();
+        }
+
+        function ExecuteUp() {
+        }
+
         var listContainerItem = "<div class='btn wordList'></div>";
         var listContainerItemButton = "<span class='glyphicon glyphicon-pencil edit-list-button' aria-hidden='true'></span>";
+
+        var resultContainerItem = "<div class='btn'></div>";
 
         function addWordListToOverview(key, title) {
             $newItem = CreateWordListItem(key, title);
 
             $("#wordListContainer").append($newItem);
+        }
+
+        function StoreCurrentWords() {
+            AddWordsToResultContainer($("#result").text());
+        }
+
+        function AddWordsToResultContainer (words) {
+            $("#resultContainer").append(CreateResultListItem(words));
+        }
+
+        function CreateResultListItem(words) {
+            $newItem = $(resultContainerItem);
+            $newItem.text(words);
+            return $newItem;
         }
 
         function CreateWordListItem(key, title) {
@@ -177,6 +297,14 @@
             });
         }
 
+
+        function SupportsHtml5Storage() {
+            try {
+                return 'localStorage' in window && window['localStorage'] !== null;
+            } catch (e) {
+                return false;
+            }
+        }
        
     </script>
 </head>
@@ -186,15 +314,20 @@
         <div class="jumbotron">
             <h1 id="result"></h1>
 
-                <button class="btn btn-success btn-lg" onclick="GenerateWordSequence();">
+                <button class="btn btn-success btn-lg" onclick="ExecuteLeft();">
                     <span class="glyphicon glyphicon-ok" aria-hidden="true"></span>
-                    Keep + Next
+                    Last
                     <span class="glyphicon glyphicon-arrow-left" aria-hidden="true"></span>
                 </button>
-                <button class="btn btn-danger btn-lg" onclick="GenerateWordSequence();">
+                <button class="btn btn-success btn-lg" onclick="ExecuteDown();">
+                    <span class="glyphicon glyphicon-ok" aria-hidden="true"></span>
+                    Keep
+                    <span class="glyphicon glyphicon-arrow-down" aria-hidden="true"></span>
+                </button>
+                <button class="btn btn-danger btn-lg" onclick="ExecuteRight();">
                     <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
-                    Destroy + Next
-                     <span class="glyphicon glyphicon-arrow-right" aria-hidden="true"></span>
+                    Next
+                    <span class="glyphicon glyphicon-arrow-right" aria-hidden="true"></span>
                 </button>
 
         </div>
@@ -208,6 +341,9 @@
         
         <div class="row panel" id="wordListContainer">
             
+        </div>
+        <div class="row panel" id="resultContainer">
+
         </div>
        
     </div>
