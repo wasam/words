@@ -17,6 +17,10 @@
 
     <script>
         $(function () {
+            var prefixLocal = "local_";
+            var wordLists = {};
+            var wordListList = {};
+
             var $generatorRuleContainer = $("#generatorRuleContainer");
             var $wordListContainer = $("#wordListContainer");
 
@@ -82,9 +86,7 @@
             
         });
 
-        var prefixLocal = "local_";
-        var wordLists = {};
-        var wordListList = {};
+        
 
 
         function AddBuiltInWordLists () {
