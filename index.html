@@ -2,11 +2,18 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>NameGen</title>
+<title>words</title>
     <link href="Content/bootstrap.min.css" rel="stylesheet" />
     <link href="jQueryUI/jquery-ui.min.css" rel="stylesheet" />
     <style>
-        
+        .btn-clipboard {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  z-index: 10;
+  display: block;
+  padding: 5px 8px;
+}
     </style>
     <script src="Scripts/jquery-1.9.1.min.js"></script>
     <script src="jQueryUI/jquery-ui.min.js"></script>
@@ -65,6 +72,8 @@
     e.preventDefault(); // prevent the default action (scroll / move caret)
             });
 
+            $('[data-toggle="tooltip"]').tooltip();
+
             //AddWordList("local_test2", "Local Test 2", ["a", "b", "c"]);
             
             LoadSettings();
@@ -72,6 +81,8 @@
             AddUserWordLists();
             AddBuiltInWordLists();
             MakeWordListItemsDragable();
+
+            LoadResults();
 
             // add a few rules before we get started
             amount = Random(2, 5);
@@ -85,7 +96,12 @@
 
             //switch to normal mode
             WordListContainerMode();
+
+            generatorRuleContainerColor = $("#generatorRuleContainer").css("background-color");
             
+            $("#mailButton").on("click", function (event) {
+                $(this).attr("href", "mailto:?subject=" + encodeURI("words: " + $("#result").text().trim()) + "&body=" + encodeURI($("#resultContainerPlain").text().trim()));
+            });
         });
 
         
@@ -279,7 +295,10 @@
                 ruleAtom = rule[i];
                 result += RandomListEntry(wordLists[ruleAtom]) + " ";
             }
-            $("#result").text(TreatWordSequenceWithSettings(result));
+            result = TreatWordSequenceWithSettings(result);
+            $("#result").text(result);
+            document.title = "words: " + result;
+            $("#twitterButton").attr("data-text", '"' + result + '"');
         }
 
         function TreatWordSequenceWithSettings(sequence) {
@@ -298,7 +317,7 @@
                     result += RandomCharacterCasing(buffer[i]);
                 }
             }
-            return result;
+            return result.trim();
         }
 
         function ExecuteRight () {
@@ -312,12 +331,13 @@
         function ExecuteDown() {
             StoreCurrentWords();
             ExecuteRight();
+            SaveResults();
         }
 
         function ExecuteUp() {
         }
 
-        var listContainerItem = "<div class='btn wordList'></div>";
+        var listContainerItem = "<div class='btn btn-default wordList'></div>";
         var listContainerItemTitle = "<span></span>";
         var listContainerItemButton = "<span class='glyphicon glyphicon-pencil edit-list-button' aria-hidden='true'></span>";
 
@@ -333,8 +353,12 @@
             AddWordsToResultContainer($("#result").text());
         }
 
-        function AddWordsToResultContainer (words) {
-            $("#resultContainer").append(CreateResultListItem(words));
+        function AddWordsToResultContainer(words) {
+            $resultContainer = $("#resultContainerPlain");
+            if ($resultContainer.text().trim() != "")
+                $resultContainer.append(", ");
+            $resultContainer.append(words.trim());
+            $("#resultContainer").append(CreateResultListItem(words.trim()));
         }
 
         function CreateResultListItem(words) {
@@ -349,9 +373,13 @@
             $newItem.attr("alt", key);
             //$newItem.attr("id", key);
             $itemTitle = $(listContainerItemTitle);
-            $itemTitle.text(title);
+            $itemTitle.text(title + " ");
             $itemTitle.attr("alt", key + "_title");
-            $newItem.append($itemTitle);
+            $newItem.append($itemTitle).mouseenter(function () {
+                $("#generatorRuleContainer").css("background-color", "rgb( 220, 240, 220 )");    
+            }).mouseleave(function () {
+                $("#generatorRuleContainer").css("background-color", generatorRuleContainerColor);    
+            });
 
             if (IsLocalList(key)) {
                 $newItem.append(listContainerItemButton).click(function () {
@@ -377,7 +405,7 @@
             $("#wordListMenuBar").collapse("show");
             $("#wordListContainer").collapse("show");
             $("#wordListEditor").collapse("hide");
-            $("#wordListSettings").collapse("hide");
+            //$("#wordListSettings").collapse("hide");
         }
 
         function WordListSettingsMode() {
@@ -429,8 +457,7 @@
             WordListContainerMode();
             wordListID = $("#wordListIDField").val();
             wordListTitle = $("#wordListTitleField").val();
-            if (!confirm("Do you really want to delete your word list '" + wordListTitle + "' ?\n(Can not be undone!)"))
-                return;
+            
             
             RemoveWordList(wordListID);
             $("#wordListIDField").val("");
@@ -439,6 +466,12 @@
             
         }
         
+        function ClearResultContainer() {
+            $("#resultContainer").text("");
+            $("#resultContainerPlain").text("");
+            SaveResults();
+        }
+
         var settings = {};
 
         function LoadSettings() {
@@ -454,8 +487,26 @@
             localStorage["settings.wordCasing"] = settings.wordCasing;
         }
 
+        function LoadResults() {
+            resultsBlob = localStorage["results"];
+            if (resultsBlob == null)
+                return;
+            results = resultsBlob.split(",");
+            for (var i = 0; i < results.length; i++) {
+                item = results[i].trim();
+                if (item != "")
+                    AddWordsToResultContainer(item);
+            }
+        }
+
+        function SaveResults() {
+            localStorage["results"] = $("#resultContainerPlain").text();
+        }
+
         function SetTextSettingsWordCasing(value) {
             $("#settingsWordCasing").text(value);
+
+            SaveSettings();
         }
 
         function AddRuleToContainer(wordListItem) {
@@ -467,12 +518,13 @@
         var ruleContainerItemButton = "<span class='glyphicon glyphicon-remove remove-rule-button' aria-hidden='true'></span>";
         function addToRuleContainer($item) {
             $(".edit-list-button", $item).remove();
-            $item.append(ruleContainerItemButton);
-            $(".remove-rule-button").click(function () {
-                $(this).parent().remove();
+            $item.append(ruleContainerItemButton).click(function () {
+                $item.remove();
             });
             return $item;
         }
+
+        var generatorRuleContainerColor;
 
         function MakeWordListItemsDragable() {
             var $wordListContainer = $("#wordListContainer");
@@ -486,6 +538,19 @@
                 cursor: "move",
                 start: function (event, ui) {
                     addToRuleContainer(ui.helper);
+                    $("#generatorRuleContainer").animate({
+                        backgroundColor: "rgb( 150, 200, 150 )"
+                    });
+                },
+                stop: function (event, ui) {
+                    //addToRuleContainer(ui.helper);
+                    $("#generatorRuleContainer").animate({
+                        backgroundColor: generatorRuleContainerColor
+                    });
+                },
+                drag: function( event, ui ) {
+ 
+                    
                 },
                 connectToSortable: "#generatorRuleContainer"
             });
@@ -505,113 +570,238 @@
 
 <body>
     <div class="container">
+        <div class="row">
+            <div class="col-xs-12">
         <div class="jumbotron">
-            <h1 id="result"></h1>
+            <h2 id="result"></h2>
+            <div class="btn-clipboard">
+            <a href="https://twitter.com/share" id="twitterButton" class="twitter-share-button" data-url="http://wasam.github.io/words/" data-text="cdsvdvsdv" data-hashtags="words">Tweet</a>
+<script>!function (d, s, id) { var js, fjs = d.getElementsByTagName(s)[0], p = /^http:/.test(d.location) ? 'http' : 'https'; if (!d.getElementById(id)) { js = d.createElement(s); js.id = id; js.src = p + '://platform.twitter.com/widgets.js'; fjs.parentNode.insertBefore(js, fjs); } }(document, 'script', 'twitter-wjs');</script>
+        </div>
+            </div>
 
-                <!--<button class="btn btn-success btn-lg" onclick="ExecuteLeft();">
+                </div></div>
+
+        <div class="row hidden-print">
+            <div class="col-xs-12">
+        <div class="panel">
+            <button class="btn btn-success btn-lg" onclick="ExecuteDown();" data-toggle="tooltip" data-placement="left" title="store + create new [ shortcut: arrow-down ]">
                     <span class="glyphicon glyphicon-ok" aria-hidden="true"></span>
-                    Last
-                    <span class="glyphicon glyphicon-arrow-left" aria-hidden="true"></span>
-                </button>-->
-                <button class="btn btn-success btn-lg" onclick="ExecuteDown();">
-                    <span class="glyphicon glyphicon-ok" aria-hidden="true"></span>
-                    Keep
+                    keep
                     <span class="glyphicon glyphicon-arrow-down" aria-hidden="true"></span>
                 </button>
-                <button class="btn btn-danger btn-lg" onclick="ExecuteRight();">
+                <button class="btn btn-danger btn-lg" onclick="ExecuteRight();" data-toggle="tooltip" data-placement="right" title="discard + create new [ shortcut: arrow-right ]">
                     <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
-                    Next
+                    next
                     <span class="glyphicon glyphicon-arrow-right" aria-hidden="true"></span>
                 </button>
-
         </div>
-        <div class="panel panel-default">
-            <div class="panel-heading">Generator Rule</div>
-            <div class="panel-body">
-                <div class="row well" id="generatorRuleContainer">
-                </div>
+       </div>
             </div>
-        </div>
+
+
+       <div class="row hidden-print">
+           <div class="col-xs-12 col-lg-5 col-sm-5">
+
 
         <div class="panel panel-default">
-            <div class="panel-heading">Word Lists</div>
-            <div class="panel-body">
-                <div class="panel-collapse row" id="wordListMenuBar">
+            <div class="panel-heading">
+                <div class="panel-collapse" id="wordListMenuBar">
                     <button class="btn btn-default" onclick="NewWordList();">
                         <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
-                        New Word List
+                        new word list
                     </button>
-                    <button class="btn btn-default" onclick="LoadSettings();WordListSettingsMode();">
+                    <!--<button class="btn btn-default" onclick="LoadSettings();WordListSettingsMode();">
                         <span class='glyphicon glyphicon-pencil' aria-hidden='true'></span>
                         Settings
-                    </button>
+                    </button>-->
                 </div>
+            </div>
+            <div class="panel-body">
+                
                 <div class="panel-collapse collapse row well" id="wordListEditor">
                     <div class="input-group">
-                        <span class="input-group-addon" id="titleSpan">Title</span>
-                        <input id="wordListTitleField" type="text" class="form-control" placeholder="a meaningful title (no special characters)" aria-describedby="titleSpan">
+                        <span class="input-group-addon" id="titleSpan">title</span>
+                        <input id="wordListTitleField" type="text" class="form-control" placeholder="a meaningful title" aria-describedby="titleSpan">
                         <input id="wordListIDField" type="hidden">
                     </div>
                     <div class="input-group">
-                        <span class="input-group-addon" id="wordsSpan">Words</span>
-                        <textarea id="wordListWordsField" name="message" class="form-control" placeholder="words words words (space separated)" rows="10" cols="30" aria-describedby="wordsSpan"></textarea>
+                        <span class="input-group-addon" id="wordsSpan">words</span>
+                        <textarea id="wordListWordsField" name="message" class="form-control" placeholder="word word word" rows="10" cols="30" aria-describedby="wordsSpan"></textarea>
                     </div>
                     <div class="input-group">
                         <button class="btn btn-default" onclick="SaveWordList();">
                             <span class="glyphicon glyphicon-floppy-disk" aria-hidden="true"></span>
-                            Save
+                            save
                         </button>
                         <button class="btn btn-default" onclick="CancelWordList();">
                             <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
-                            Cancel
+                            cancel
                         </button>
-                        <button class="btn btn-default" onclick="DeleteWordList();">
+                        <button class="btn btn-default" data-toggle="modal" data-target="#deleteWordListModal">
                             <span class="glyphicon glyphicon-minus" aria-hidden="true"></span>
-                            Delete
+                            delete
                         </button>
                     </div>
+          
                 </div>
-                <div class="panel-collapse collapse row well" id="wordListSettings">
-                    <div class="input-group">
-                        <span class="input-group-addon" id="Span1">Word Casing</span>
-                        <div class="dropdown">
-                          <button class="btn btn-default dropdown-toggle" type="button" id="settingsWordCasing_button" data-toggle="dropdown" aria-expanded="true">
-                            <span id="settingsWordCasing">Dropdown</span>
-                            <span class="caret"></span>
-                          </button>
-                          <ul class="dropdown-menu" role="menu" aria-labelledby="dropdownMenu1">
-                            <li role="presentation"><a role="menuitem" tabindex="-1" href="#" onclick="SetTextSettingsWordCasing('as Defined');">as Defined</a></li>
-                            <li role="presentation"><a role="menuitem" tabindex="-1" href="#" onclick="SetTextSettingsWordCasing('lower case');">lower case</a></li>
-                            <li role="presentation"><a role="menuitem" tabindex="-1" href="#" onclick="SetTextSettingsWordCasing('UPPER CASE');">UPPER CASE</a></li>
-                            <li role="presentation"><a role="menuitem" tabindex="-1" href="#" onclick="SetTextSettingsWordCasing('Camel Case');">Camel Case</a></li>
-                            <li role="presentation"><a role="menuitem" tabindex="-1" href="#" onclick="SetTextSettingsWordCasing('RanDOm');">RanDOm</a></li>
-                          </ul>
-                        </div>
-                    </div>
-                    <div class="input-group">
-                        <button class="btn btn-default" onclick="SaveSettings();">
-                            <span class="glyphicon glyphicon-floppy-disk" aria-hidden="true"></span>
-                            Save
-                        </button>
-                        <button class="btn btn-default" onclick="WordListContainerMode();">
-                            <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
-                            Cancel
-                        </button>
-                    </div>
-                </div>
+               
+
                 <div class="panel-collapse row" id="wordListContainer">
                 </div>
             </div>
         </div>
-        <div class="row panel" id="resultContainer">
+               </div>
 
+            <div class="col-xs-12 col-lg-1 col-sm-1">
+                <div class="center-block">
+                <h1 class="hidden-xs">
+                    <span class="glyphicon glyphicon-arrow-right" aria-hidden="true"></span> 
+                </h1>
+                    <h1 class="visible-xs">
+                    <span class="glyphicon glyphicon-arrow-down" aria-hidden="true"></span> 
+                </h1>
+                <small>drag+drop</small>
+                    </div>
+            </div>
+
+           
+           <div class="col-xs-12 col-lg-6 col-sm-6">
+
+             <div class="panel panel-default">
+            
+            <div role="tabpanel">
+                <ul class="nav nav-tabs" role="tablist">
+                    <li role="presentation" class="active"><a href="#pattern" aria-controls="pattern" role="tab" data-toggle="tab">pattern</a></li>
+                    <li role="presentation" onclick="LoadSettings();"><a href="#wordListSettings" aria-controls="wordListSettings" role="tab" data-toggle="tab">
+                        <span class="glyphicon glyphicon-wrench"></span> settings</a></li>
+                </ul>
+
+            
+                <div class="tab-content">
+                    <div role="tabpanel" class="tab-pane active" id="pattern">
+                        <div class="well" id="generatorRuleContainer"></div>
+                    </div>
+                      <div role="tabpanel" class="tab-pane" id="wordListSettings">
+                        <div class="input-group">
+                            <span class="input-group-addon" id="Span1">word casing</span>
+                            <div class="dropdown">
+                              <button class="btn btn-default dropdown-toggle" type="button" id="settingsWordCasing_button" data-toggle="dropdown" aria-expanded="true">
+                                <span id="settingsWordCasing">Dropdown</span>
+                                <span class="caret"></span>
+                              </button>
+                              <ul class="dropdown-menu" role="menu" aria-labelledby="dropdownMenu1">
+                                <li role="presentation"><a role="menuitem" tabindex="-1" href="#" onclick="SetTextSettingsWordCasing('as Defined');">as Defined</a></li>
+                                <li role="presentation"><a role="menuitem" tabindex="-1" href="#" onclick="SetTextSettingsWordCasing('lower case');">lower case</a></li>
+                                <li role="presentation"><a role="menuitem" tabindex="-1" href="#" onclick="SetTextSettingsWordCasing('UPPER CASE');">UPPER CASE</a></li>
+                                <li role="presentation"><a role="menuitem" tabindex="-1" href="#" onclick="SetTextSettingsWordCasing('Camel Case');">Camel Case</a></li>
+                                <li role="presentation"><a role="menuitem" tabindex="-1" href="#" onclick="SetTextSettingsWordCasing('RanDOm');">RanDOm</a></li>
+                              </ul>
+                            </div>
+                        </div>
+                        <!--<div class="input-group">
+                            <button class="btn btn-default" onclick="SaveSettings();">
+                                <span class="glyphicon glyphicon-floppy-disk" aria-hidden="true"></span>
+                                Save
+                            </button>
+                            <button class="btn btn-default" onclick="WordListContainerMode();">
+                                <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
+                                Cancel
+                            </button>
+                        </div>-->
+                    </div>
+                </div>
+            </div>
         </div>
+
+            </div>
+           </div>
+
+
+        <div class="row">
+            <div class="col-xs-12">
+        <div class="panel panel-default">
+            <div role="tabpanel">
+                <ul class="nav nav-tabs hidden-print" role="tablist">
+                    <li role="presentation" class="active"><a href="#storedResults" aria-controls="storedResults" role="tab" data-toggle="tab"><span class="glyphicon glyphicon-star"></span> keepers</a></li>
+                    <li role="presentation"><a href="#resultsPlain" aria-controls="resultsPlain" role="tab" data-toggle="tab"><span class="glyphicon glyphicon-star-empty"></span>plain text</a></li>
+                </ul>
+
+            
+                <div class="tab-content">
+                    <div role="tabpanel" class="tab-pane active" id="storedResults">
+                        <div class="panel" id="resultContainer" data-toggle="tooltip" data-placement="left" title="your favourite word combinations are stored here when you click 'keep' or press the down arrow">
+            </div>
+                    </div>
+                      <div role="tabpanel" class="tab-pane" id="resultsPlain">
+                          <div class="panel" id="resultContainerPlain" data-toggle="tooltip" data-placement="left" title="your favourite word combinations are stored here when you click 'keep' or press the down arrow">
+            </div>
+                          </div>
+                    </div>
+            
+            <div class="panel-footer hidden-print">
+                <button class="btn btn-default" onclick="window.print();">
+                    <span class="glyphicon glyphicon-print" aria-hidden="true"></span>
+                    print
+                </button>
+                 
+                <a class="btn btn-default" id="mailButton" target="_blank" href="/">
+                    <span class="glyphicon glyphicon-send" aria-hidden="true"></span>
+                    mail
+                </a>
+
+                <button type="button" class="btn btn-default" data-toggle="modal" data-target="#clearResultsModal" title="click for a fresh start">
+                    <span class="glyphicon glyphicon-minus" aria-hidden="true"></span>
+                    clear
+                </button>
+
+               
+                <div class="modal fade" id="clearResultsModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+                  <div class="modal-dialog modal-sm">
+                    <div class="modal-content">
+                      <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                        <h4 class="modal-title" id="myModalLabel">clearing results</h4>
+                      </div>
+                      <div class="modal-body">
+                        do you really want to clear all results?<br />(can not be undone!)
+                      </div>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">cancel</button>
+                        <button type="button" class="btn btn-primary" data-dismiss="modal" onclick="ClearResultContainer();">clear results</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="modal fade" id="deleteWordListModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+                  <div class="modal-dialog modal-sm">
+                    <div class="modal-content">
+                      <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                        <h4 class="modal-title" id="H1">deleting word list</h4>
+                      </div>
+                      <div class="modal-body">
+                        do you really want to delete this word list?<br />(Can not be undone!)
+                      </div>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">cancel</button>
+                        <button type="button" class="btn btn-primary" data-dismiss="modal" onclick="DeleteWordList();">delete word list</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+            </div>
+        </div>
+                </div>
+            </div>
        
     </div>
 
     <footer class="modal-footer" role="contentinfo">
         <div class="container">
-            <a href="http://samwalz.com/">samwalz.com</a>
+            <span class="hidden-print">data (word lists + results) is stored locally in your browser. privacy guaranteed. - </span><span class="glyphicon glyphicon-heart"></span> 2015 <a href="http://samwalz.com/">samwalz.com</a>
         </div>
     </footer>
 
