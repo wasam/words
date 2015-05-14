@@ -102,6 +102,9 @@
             $("#mailButton").on("click", function (event) {
                 $(this).attr("href", "mailto:?subject=" + encodeURI("words: " + $("#result").text().trim()) + "&body=" + encodeURI($("#resultContainerPlain").text().trim()));
             });
+            $("#twitterButton").on("click", function (event) {
+                $("#twitterButton").attr("data-text", '"' + $("#result").text().trim() + '"');
+            });
         });
 
         
