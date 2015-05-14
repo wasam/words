@@ -16,10 +16,12 @@
 <!--<script type="text/javascript" src="nameGen.js"></script>-->
 
     <script>
+        var prefixLocal = "local_";
+        var wordLists = {};
+        var wordListList = {};
+
         $(function () {
-            var prefixLocal = "local_";
-            var wordLists = {};
-            var wordListList = {};
+            
 
             var $generatorRuleContainer = $("#generatorRuleContainer");
             var $wordListContainer = $("#wordListContainer");
@@ -191,7 +193,7 @@
         function LoadLocalWordListList() {
             wordListListString = localStorage["wordListList"];
             if (wordListListString == null)
-                return null;
+                return wordListList;
             return ParseWordListListBlob(wordListListString);
         }
 
