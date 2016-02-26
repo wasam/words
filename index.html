@@ -406,13 +406,17 @@
             return prefixLocal + nowDate.getUTCFullYear() + "_" + nowDate.getUTCMonth() + "_" + nowDate.getUTCDate() + "_" + nowDate.getUTCHours() + "_" + nowDate.getUTCMinutes() + "_" + nowDate.getUTCSeconds() + "_" + nowDate.getUTCMilliseconds();
         }
 
+        var wordListEditMode = false;
+
         function WordListEditMode() {
+            wordListEditMode = true;
             $("#wordListMenuBar").collapse("hide");
             $("#wordListContainer").collapse("hide");
             $("#wordListEditor").collapse("show");
         }
 
         function WordListContainerMode() {
+            wordListEditMode = false;
             $("#wordListMenuBar").collapse("show");
             $("#wordListContainer").collapse("show");
             $("#wordListEditor").collapse("hide");
