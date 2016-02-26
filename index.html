@@ -28,6 +28,7 @@
         var prefixLocal = "local_";
         var wordLists = {};
         var wordListList = {};
+        var wordListEditMode = false;
 
         $(function () {
             
@@ -52,6 +53,9 @@
             
 
             $(document).keydown(function(e) {
+            	if (wordListEditMode) {
+            	    return;
+            	}
     switch(e.which) {
         case 37: // left
             ExecuteLeft();
@@ -406,7 +410,6 @@
             return prefixLocal + nowDate.getUTCFullYear() + "_" + nowDate.getUTCMonth() + "_" + nowDate.getUTCDate() + "_" + nowDate.getUTCHours() + "_" + nowDate.getUTCMinutes() + "_" + nowDate.getUTCSeconds() + "_" + nowDate.getUTCMilliseconds();
         }
 
-        var wordListEditMode = false;
 
         function WordListEditMode() {
             wordListEditMode = true;
