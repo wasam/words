@@ -307,7 +307,7 @@
             rule = FetchGeneratorRule();
             for (i = 0; i < rule.length; i++) {
                 ruleAtom = rule[i];
-                result += RandomListEntry(wordLists[ruleAtom]) + " ";
+                result += RandomListEntry(wordLists[ruleAtom]) + (i == rule.length - 1 ? "" : settings.wordSeparator);
             }
             result = TreatWordSequenceWithSettings(result);
             $("#result").text(result);
@@ -493,16 +493,29 @@
         var settings = {};
 
         function LoadSettings() {
+					if (localStorage["settings.wordCasing"]) {
             settings.wordCasing = localStorage["settings.wordCasing"];
-
+					} else {
+						settings.wordCasing = "as Defined";
+					}
+					
+					if (localStorage["settings.wordSeparator"]) {
+					  settings.wordSeparator = localStorage["settings.wordSeparator"];
+					} else {
+						settings.wordSeparator = " ";
+					}
+						
             $("#settingsWordCasing").text(settings.wordCasing);
+					  $("#settingsWordSeparator").val(settings.wordSeparator);
         }
 
         function SaveSettings() {
             WordListContainerMode();
             settings.wordCasing = $("#settingsWordCasing").text();
+					  settings.wordSeparator = $("#settingsWordSeparator").val();
 
             localStorage["settings.wordCasing"] = settings.wordCasing;
+            localStorage["settings.wordSeparator"] = settings.wordSeparator;
         }
 
         function LoadResults() {
@@ -717,7 +730,7 @@
                             <span class="input-group-addon" id="Span1">word casing</span>
                             <div class="dropdown">
                               <button class="btn btn-default dropdown-toggle" type="button" id="settingsWordCasing_button" data-toggle="dropdown" aria-expanded="true">
-                                <span id="settingsWordCasing">Dropdown</span>
+                                <span id="settingsWordCasing">as Defined</span>
                                 <span class="caret"></span>
                               </button>
                               <ul class="dropdown-menu" role="menu" aria-labelledby="dropdownMenu1">
@@ -728,6 +741,10 @@
                                 <li role="presentation"><a role="menuitem" tabindex="-1" href="#" onclick="SetTextSettingsWordCasing('RanDOm');">RanDOm</a></li>
                               </ul>
                             </div>
+                        </div>
+												<div class="input-group">
+                            <span class="input-group-addon" id="wordSeparatorSpan">word separator</span>
+                            <input id="settingsWordSeparator" type="text" class="form-control" href="#" onchange="SaveSettings();" placeholder="-no space-" aria-describedby="wordSeparatorSpan">
                         </div>
                         <!--<div class="input-group">
                             <button class="btn btn-default" onclick="SaveSettings();">
